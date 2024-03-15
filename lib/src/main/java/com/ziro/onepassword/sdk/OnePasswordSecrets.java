@@ -11,6 +11,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -92,7 +93,7 @@ public class OnePasswordSecrets {
                         .exception());
     }
 
-    public Properties getSecureNoteAsProperties(String vaultId, String itemId) {
+    public Map<Object, Object> getSecureNoteAsMap(String vaultId, String itemId) {
         Item item = client.getItem(vaultId, itemId);
         Field notesPlain = item.fields().stream()
                 .filter(field -> "notesPlain".equals(field.label()))
