@@ -86,9 +86,10 @@ public class OnePasswordSecrets {
     private static String getApiAccessToken() {
         return Optional.ofNullable(System.getenv(ENV_VAR_TEST_ENV_ONE_PASSWORD_API_ACCESS_TOKEN))
                 .orElseThrow(() -> SystemUnhandledException.fluent()
-                .message("Environment variable [name=%s] must be defined.",
-                        ENV_VAR_TEST_ENV_ONE_PASSWORD_API_ACCESS_TOKEN)
-                .exception());
+                        .message(
+                                "Environment variable [name=%s] must be defined.",
+                                ENV_VAR_TEST_ENV_ONE_PASSWORD_API_ACCESS_TOKEN)
+                        .exception());
     }
 
     public Properties getSecureNoteAsProperties(String vaultId, String itemId) {
