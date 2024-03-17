@@ -1,5 +1,7 @@
 package com.ziro.onepassword.sdk;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.ziro.espresso.fluent.exceptions.SystemUnhandledException;
@@ -13,7 +15,6 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -41,16 +42,25 @@ public class OnePasswordSecrets {
     String baseUrl;
 
     @Getter(AccessLevel.PRIVATE)
+    String accessToken;
+
+    @Getter(AccessLevel.PRIVATE)
     OnePasswordConnectServerApiClient client;
 
     @Builder
-    public OnePasswordSecrets(String baseUrl, @Nullable X509TrustManager trustManager) {
+    public OnePasswordSecrets(String baseUrl, String accessToken, @Nullable X509TrustManager trustManager) {
+        Preconditions.checkArgument(Strings.isNullOrEmpty(baseUrl), "baseUrl is required.");
         this.baseUrl = baseUrl;
+        Preconditions.checkArgument(Strings.isNullOrEmpty(accessToken), "accessToken is required.");
+        this.accessToken = accessToken;
         client = createClient(
-                baseUrl, Objects.requireNonNullElseGet(trustManager, OkHttpClientFactory::createNaiveX509TrustManager));
+                baseUrl,
+                accessToken,
+                Objects.requireNonNullElseGet(trustManager, OkHttpClientFactory::createNaiveX509TrustManager));
     }
 
-    private static OnePasswordConnectServerApiClient createClient(String baseUrl, X509TrustManager trustManager) {
+    private static OnePasswordConnectServerApiClient createClient(
+            String baseUrl, String accessToken, X509TrustManager trustManager) {
         Gson gson = new GsonBuilder()
                 .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
                 .setPrettyPrinting()
@@ -70,27 +80,18 @@ public class OnePasswordSecrets {
 
         SSLSocketFactory sslSocketFactory = OkHttpClientFactory.buildSocketFactory(trustManager);
         okHttpClientBuilder.sslSocketFactory(sslSocketFactory, trustManager);
-        okHttpClientBuilder.addInterceptor(chain -> chain.proceed(addRequiredHeaders(chain.request())));
+        okHttpClientBuilder.addInterceptor(chain -> chain.proceed(addRequiredHeaders(chain.request(), accessToken)));
         OkHttpClient okHttpClient = okHttpClientBuilder.build();
         Retrofit retrofit = retrofitBuilder.client(okHttpClient).build();
         return retrofit.create(OnePasswordConnectServerApiClient.class);
     }
 
-    private static Request addRequiredHeaders(Request request) {
+    private static Request addRequiredHeaders(Request request, String accessToken) {
         return request.newBuilder()
                 .addHeader("Accept", "application/json")
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", String.format("Bearer %s", getApiAccessToken()))
+                .addHeader("Authorization", String.format("Bearer %s", accessToken))
                 .build();
-    }
-
-    private static String getApiAccessToken() {
-        return Optional.ofNullable(System.getenv(ENV_VAR_TEST_ENV_ONE_PASSWORD_API_ACCESS_TOKEN))
-                .orElseThrow(() -> SystemUnhandledException.fluent()
-                        .message(
-                                "Environment variable [name=%s] must be defined.",
-                                ENV_VAR_TEST_ENV_ONE_PASSWORD_API_ACCESS_TOKEN)
-                        .exception());
     }
 
     public Map<Object, Object> getSecureNoteAsMap(String vaultId, String itemId) {
