@@ -23,6 +23,7 @@ import javax.net.ssl.X509TrustManager;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.Value;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -42,9 +43,11 @@ public class OnePasswordSecrets {
     String baseUrl;
 
     @Getter(AccessLevel.PRIVATE)
+    @ToString.Exclude
     String accessToken;
 
     @Getter(AccessLevel.PRIVATE)
+    @ToString.Exclude
     OnePasswordConnectServerApiClient client;
 
     @Builder
