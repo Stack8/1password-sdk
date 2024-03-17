@@ -3,9 +3,19 @@ plugins {
     id 'com.diffplug.spotless' version '6.25.0'
 }
 
-// Don't cache snapshots
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+allprojects {
+    // With this, we can reference java dependencies within git. https://www.jvt.me/posts/2021/10/27/gradle-plugin-jitpack/
+    repositories {
+        mavenCentral()
+        maven {
+            url 'https://jitpack.io'
+            content {excludeGroupByRegex "com.github.Stack8.*"}
+        }
+    }
+    // Don't cache snapshots
+    configurations.all {
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
 }
 
 spotless {

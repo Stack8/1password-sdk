@@ -5,17 +5,5 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
 }
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        mavenCentral()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven {
-            url 'https://jitpack.io'
-            content {excludeGroupByRegex "com.github.Stack8.*"}
-        }
-    }
-}
-
 rootProject.name = '1password-sdk'
 include('lib')
