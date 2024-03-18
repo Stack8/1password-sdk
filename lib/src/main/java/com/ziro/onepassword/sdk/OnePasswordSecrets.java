@@ -37,8 +37,6 @@ public class OnePasswordSecrets {
     private static final Duration DEFAULT_CONNECTION_TIMEOUT = Duration.ofSeconds(3);
     private static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(30);
     private static final Duration DEFAULT_WRITE_TIMEOUT = Duration.ofSeconds(30);
-    private static final String ENV_VAR_TEST_ENV_ONE_PASSWORD_API_ACCESS_TOKEN =
-            "TEST_ENV_ONE_PASSWORD_API_ACCESS_TOKEN";
 
     String baseUrl;
 
@@ -48,12 +46,12 @@ public class OnePasswordSecrets {
 
     @Builder
     public OnePasswordSecrets(String baseUrl, String accessToken, @Nullable X509TrustManager trustManager) {
-        Preconditions.checkArgument(Strings.isNullOrEmpty(baseUrl), "baseUrl is required.");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(baseUrl), "baseUrl is required.");
         this.baseUrl = baseUrl;
-        Preconditions.checkArgument(Strings.isNullOrEmpty(accessToken), "accessToken is required.");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accessToken), "accessToken is required.");
         client = createClient(
                 baseUrl,
-                System.getenv().getOrDefault(ENV_VAR_TEST_ENV_ONE_PASSWORD_API_ACCESS_TOKEN, accessToken),
+                accessToken,
                 Objects.requireNonNullElseGet(trustManager, OkHttpClientFactory::createNaiveX509TrustManager));
     }
 
