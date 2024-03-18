@@ -9,7 +9,7 @@ allprojects {
         mavenCentral()
         maven {
             url 'https://jitpack.io'
-            content {excludeGroupByRegex "com.github.Stack8.*"}
+            content {includeGroupByRegex 'com.github.Stack8.*' }
         }
     }
     // Don't cache snapshots
