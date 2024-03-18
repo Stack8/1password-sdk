@@ -44,10 +44,6 @@ public class OnePasswordSecrets {
 
     @Getter(AccessLevel.PRIVATE)
     @ToString.Exclude
-    String accessToken;
-
-    @Getter(AccessLevel.PRIVATE)
-    @ToString.Exclude
     OnePasswordConnectServerApiClient client;
 
     @Builder
@@ -55,10 +51,9 @@ public class OnePasswordSecrets {
         Preconditions.checkArgument(Strings.isNullOrEmpty(baseUrl), "baseUrl is required.");
         this.baseUrl = baseUrl;
         Preconditions.checkArgument(Strings.isNullOrEmpty(accessToken), "accessToken is required.");
-        this.accessToken = accessToken;
         client = createClient(
                 baseUrl,
-                accessToken,
+                System.getenv().getOrDefault(ENV_VAR_TEST_ENV_ONE_PASSWORD_API_ACCESS_TOKEN, accessToken),
                 Objects.requireNonNullElseGet(trustManager, OkHttpClientFactory::createNaiveX509TrustManager));
     }
 
