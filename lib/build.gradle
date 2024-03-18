@@ -57,3 +57,12 @@ java {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+group = 'com.ziro'
+version = resolveProjectVersion()
+
+def resolveProjectVersion() {
+    def version = file("${projectDir}/version.txt").text.trim()
+    def gitDescribe = 'git describe --exact-match HEAD'.execute().text.trim()
+    gitDescribe ? version : version + '-SNAPSHOT'
+}
