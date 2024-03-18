@@ -6,4 +6,3 @@ plugins {
 }
 
 rootProject.name = '1password-sdk'
-include('lib')
