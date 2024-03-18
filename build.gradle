@@ -58,7 +58,7 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-group = 'com.ziro'
+group = 'com.ziro.engineering'
 version = resolveProjectVersion()
 
 def resolveProjectVersion() {
