@@ -13,7 +13,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -90,7 +89,13 @@ public class OnePasswordSecrets {
                 .build();
     }
 
-    public Map<Object, Object> getSecureNoteAsMap(String vaultId, String itemId) {
+    /**
+     * Fetch a secure note from 1password that is expected to be in Java properties format.
+     * @param vaultId vault id.
+     * @param itemId item id.
+     * @return the properties in the secure note.
+     */
+    public Properties getSecureNoteAsProperties(String vaultId, String itemId) {
         Item item = client.getItem(vaultId, itemId);
         Field notesPlain = item.fields().stream()
                 .filter(field -> "notesPlain".equals(field.label()))
