@@ -5,7 +5,6 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.ziro.espresso.fluent.exceptions.SystemUnhandledException;
-import com.ziro.espresso.javax.annotation.extensions.NonNullByDefault;
 import com.ziro.espresso.okhttp3.OkHttpClientFactory;
 import com.ziro.espresso.okhttp3.SynchronousCallAdapterFactory;
 import com.ziro.espresso.streams.MoreCollectors;
@@ -19,39 +18,54 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
-import lombok.AccessLevel;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.Value;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-@Value
-@NonNullByDefault
 public class OnePasswordSecrets {
 
     private static final Duration DEFAULT_CONNECTION_TIMEOUT = Duration.ofSeconds(3);
     private static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(30);
     private static final Duration DEFAULT_WRITE_TIMEOUT = Duration.ofSeconds(30);
-
-    String baseUrl;
-
-    @Getter(AccessLevel.PRIVATE)
-    @ToString.Exclude
-    OnePasswordConnectServerApiClient client;
+    private final OnePasswordConnectServerApiClient client;
 
     @Builder
-    public OnePasswordSecrets(String baseUrl, String accessToken, @Nullable X509TrustManager trustManager) {
+    OnePasswordSecrets(String baseUrl, String accessToken, @Nullable X509TrustManager trustManager) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(baseUrl), "baseUrl is required.");
-        this.baseUrl = baseUrl;
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accessToken), "accessToken is required.");
         client = createClient(
                 baseUrl,
                 accessToken,
                 Objects.requireNonNullElseGet(trustManager, OkHttpClientFactory::createNaiveX509TrustManager));
+    }
+
+    /**
+     * Fetch a secure note from 1password that is expected to be in Java properties format.
+     * @param vaultId vault id.
+     * @param itemId item id.
+     * @return the properties in the secure note.
+     */
+    public Properties getSecureNoteAsProperties(String vaultId, String itemId) {
+        Item item = client.getItem(vaultId, itemId);
+        Field notesPlain = item.fields().stream()
+                .filter(field -> "notesPlain".equals(field.label()))
+                .collect(MoreCollectors.exactlyOne("field with [label=notesPlain]"));
+        Properties properties = new Properties();
+        InputStream in = new ByteArrayInputStream(notesPlain.value().getBytes());
+        try {
+            properties.load(in);
+        } catch (IOException e) {
+            throw SystemUnhandledException.fluent()
+                    .message(
+                            "Something went wrong while trying to load secure note as properties using "
+                                    + "[vaultId=%s, itemId=%s].",
+                            vaultId, itemId)
+                    .cause(e)
+                    .exception();
+        }
+        return properties;
     }
 
     private static OnePasswordConnectServerApiClient createClient(
@@ -87,32 +101,5 @@ public class OnePasswordSecrets {
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", String.format("Bearer %s", accessToken))
                 .build();
-    }
-
-    /**
-     * Fetch a secure note from 1password that is expected to be in Java properties format.
-     * @param vaultId vault id.
-     * @param itemId item id.
-     * @return the properties in the secure note.
-     */
-    public Properties getSecureNoteAsProperties(String vaultId, String itemId) {
-        Item item = client.getItem(vaultId, itemId);
-        Field notesPlain = item.fields().stream()
-                .filter(field -> "notesPlain".equals(field.label()))
-                .collect(MoreCollectors.exactlyOne("field with [label=notesPlain]"));
-        Properties properties = new Properties();
-        InputStream in = new ByteArrayInputStream(notesPlain.value().getBytes());
-        try {
-            properties.load(in);
-        } catch (IOException e) {
-            throw SystemUnhandledException.fluent()
-                    .message(
-                            "Something went wrong while trying to load secure note as properties using "
-                                    + "[vaultId=%s, itemId=%s].",
-                            vaultId, itemId)
-                    .cause(e)
-                    .exception();
-        }
-        return properties;
     }
 }
