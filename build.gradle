@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+    id 'com.diffplug.spotless' version '6.25.0'
+}
+
+allprojects {
+    // With this, we can reference java dependencies within git. https://www.jvt.me/posts/2021/10/27/gradle-plugin-jitpack/
+    repositories {
+        mavenCentral()
+        maven {
+            url 'https://jitpack.io'
+            content {includeGroupByRegex 'com.github.stack8.*' }
+        }
+    }
+    // Don't cache snapshots
+    configurations.all {
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+}
+
+spotless {
+    java {
+        palantirJavaFormat()
+    }
+    groovyGradle {
+        target '*.gradle' // default target of groovyGradle
+        greclipse()
+        indentWithSpaces()
+    }
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.google.guava:guava:32.1.1-jre'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'org.slf4j:slf4j-api:2.0.12'
+
+    implementation 'com.github.stack8:espresso:phase1-SNAPSHOT'
+
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+group = 'com.ziro.engineering'
+version = resolveProjectVersion()
+
+def resolveProjectVersion() {
+    def version = file("${rootDir}/version.txt").text.trim()
+    def gitDescribe = 'git describe --exact-match HEAD'.execute().text.trim()
+    gitDescribe ? version : version + '-SNAPSHOT'
+}
